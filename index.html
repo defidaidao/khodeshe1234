@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DefiDaiDao | Premium DApp</title>
+    <style>
+        :root {
+            --binance-yellow: #F3BA2F;
+            --bg-dark: #0B0E11;
+            --card-bg: #1E2329;
+            --text-main: #EAECEF;
+            --text-dim: #848E9C;
+            --border: #474D57;
+        }
+
+        body, html { margin: 0; padding: 0; background: var(--bg-dark); color: var(--text-main); font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+        /* ذرات طلایی بهینه‌سازی شده */
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+
+        .container {
+            position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 20px;
+        }
+
+        .card {
+            background: var(--card-bg); border-radius: 32px; width: 100%; max-width: 440px; padding: 2.5rem;
+            box-shadow: 0 40px 100px rgba(0,0,0,0.8); border: 1px solid var(--border); backdrop-filter: blur(10px);
+        }
+
+        h1 { color: var(--binance-yellow); font-size: 3rem; font-weight: 900; margin: 0; text-align: center; letter-spacing: -2px; }
+        .subtitle { font-size: 0.8rem; color: var(--text-dim); text-align: center; letter-spacing: 3px; margin-bottom: 30px; }
+
+        .balance-box { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .bal-item { background: rgba(0,0,0,0.3); padding: 12px; border-radius: 16px; border: 1px solid #2B3139; text-align: center; }
+        .bal-val { font-size: 1.1rem; font-weight: bold; color: #fff; display: block; }
+        .bal-lbl { font-size: 0.6rem; color: var(--text-dim); }
+
+        /* دکمه‌های هوشمند */
+        .btn {
+            width: 100%; border-radius: 18px; border: none; font-weight: 800; cursor: pointer; transition: 0.4s;
+            display: flex; justify-content: center; align-items: center; text-transform: uppercase;
+        }
+
+        .btn-main { background: var(--binance-yellow); color: #000; padding: 22px; font-size: 1.4rem; }
+        .btn-sub { background: #2B3139; color: var(--binance-yellow); padding: 12px; font-size: 0.9rem; border: 1px solid var(--binance-yellow); margin-bottom: 20px; }
+
+        /* بخش ثبت نام */
+        .reg-zone { display: none; margin-top: 20px; text-align: left; }
+        .section-h { font-size: 1.2rem; margin-bottom: 10px; color: #fff; font-weight: bold; }
+        .input-box { background: #000; border: 2px solid var(--border); border-radius: 15px; padding: 18px; margin-bottom: 15px; }
+        input { background: transparent; border: none; color: #fff; width: 100%; outline: none; font-size: 1rem; text-align: center; font-family: monospace; }
+
+        /* دکمه‌های داشبورد بزرگ */
+        .dash-group { display: none; flex-direction: column; gap: 15px; }
+        .btn-dash { background: var(--binance-yellow); color: #000; padding: 20px; font-size: 1.3rem; }
+        .btn-stats { background: transparent; border: 2px solid var(--border); color: #fff; padding: 18px; font-size: 1.1rem; }
+
+        /* اطلاعات پنل */
+        #infoPanel { background: rgba(0,0,0,0.5); border-radius: 20px; padding: 20px; margin-top: 20px; display: none; }
+        .stat-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #2B3139; font-size: 0.9rem; }
+        .stat-lbl { color: var(--text-dim); }
+        .stat-v { color: var(--binance-yellow); font-weight: bold; }
+
+        /* لوگوهای پایین */
+        .partners { margin-top: 40px; display: flex; gap: 25px; opacity: 0.4; grayscale: 100%; filter: grayscale(1); justify-content: center; flex-wrap: wrap; }
+        .partners span { font-weight: bold; font-size: 0.8rem; letter-spacing: 1px; }
+
+        /* پاپ‌آپ تبریک */
+        #congratsModal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9);
+            display: none; z-index: 100; justify-content: center; align-items: center; text-align: center;
+        }
+        .modal-content { background: var(--card-bg); padding: 3rem; border-radius: 30px; border: 2px solid var(--binance-yellow); max-width: 350px; }
+        
+        #status { font-size: 0.7rem; color: var(--text-dim); margin-top: 20px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<div class="container">
+    <div class="card">
+        <h1>DefiDaiDao</h1>
+        <div class="subtitle">Official BSC Protocol</div>
+
+        <div class="balance-box">
+            <div class="bal-item"><span class="bal-v" id="bnbVal">0.000</span><span class="bal-lbl">BNB (GAS)</span></div>
+            <div class="bal-item"><span class="bal-v" id="daiVal">0.00</span><span class="bal-lbl">DAI (FUNDS)</span></div>
+        </div>
+
+        <button id="connectBtn" class="btn btn-main">Connect Wallet</button>
+
+        <div id="registrationZone" class="reg-zone">
+            <div id="step1">
+                <div class="section-h">Phase 1: Authorization</div>
+                <button id="approveBtn" class="btn btn-main" style="font-size: 1.1rem; padding: 15px;">Approve Funds</button>
+            </div>
+            <div id="step2" style="display:none;">
+                <div class="section-h">Phase 2: Registration</div>
+                <div class="input-box"><input type="text" id="uplineInput" placeholder="Sponsor Address"></div>
+                <button id="registerBtn" class="btn btn-main">Confirm Registration</button>
+            </div>
+        </div>
+
+        <div class="dash-group" id="mainDashboard">
+            <button id="rewardBtn" class="btn btn-dash">Claim Your Reward</button>
+            <button id="infoBtn" class="btn btn-stats">Global Stats</button>
+        </div>
+
+        <div id="infoPanel">
+            <div class="stat-row"><span class="stat-lbl">Member Global ID:</span><span class="stat-v" id="v-id">-</span></div>
+            <div class="stat-row"><span class="stat-lbl">All Left Members:</span><span class="stat-v" id="v-l">0</span></div>
+            <div class="stat-row"><span class="stat-lbl">All Right Members:</span><span class="stat-v" id="v-r">0</span></div>
+            <div class="stat-row"><span class="stat-lbl">Sync Complete:</span><span class="stat-v" id="v-s">NO</span></div>
+        </div>
+
+        <div id="status">System Ready</div>
+    </div>
+
+    <div class="partners">
+        <span>BINANCE</span><span>MAKERDAO</span><span>METAMASK</span><span>TRUST WALLET</span>
+    </div>
+</div>
+
+<div id="congratsModal">
+    <div class="modal-content">
+        <h2 style="color:var(--binance-yellow); font-size: 2rem;">CONGRATULATIONS!</h2>
+        <p>Your registration on DefiDaiDao is complete.</p>
+        <button class="btn btn-main" onclick="location.reload()">Enter Dashboard</button>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+<script>
+    // --- Particles Engine ---
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    function initParticles() {
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        for(let i=0; i<60; i++) particles.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, r: Math.random()*2+1, d: Math.random()*1+0.5 });
+    }
+    function drawParticles() {
+        ctx.clearRect(0,0,canvas.width, canvas.height);
+        ctx.fillStyle = "#F3BA2F33";
+        particles.forEach(p => {
+            ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+            p.y -= p.d; if(p.y < -10) p.y = canvas.height + 10;
+        });
+        requestAnimationFrame(drawParticles);
+    }
+    window.onload = () => { initParticles(); drawParticles(); };
+
+    // --- Core Logic ---
+    const CONTRACT_ADDRESS = "0x84a47446f7a563Ce899aE991127b20FB8E20cEca";
+    const DAI_ADDRESS = "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3";
+    let signer, mainContract, tokenContract;
+
+    const connectBtn = document.getElementById('connectBtn');
+    const dash = document.getElementById('mainDashboard');
+
+    connectBtn.onclick = async () => {
+        if (!window.ethereum) return alert("Provider not found");
+        try {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = await provider.getSigner();
+            const addr = await signer.getAddress();
+            
+            // Setup Contracts
+            tokenContract = new ethers.Contract(DAI_ADDRESS, ["function approve(address s, uint256 a) public returns (bool)", "function balanceOf(address) view returns (uint256)"], signer);
+            mainContract = new ethers.Contract(CONTRACT_ADDRESS, ["function step_2_become_owner(address _target) external", "function reward() external", "function Owner_Info_Global(address _u) external view returns (uint64 ID, uint32 All_Left, uint32 All_Right, uint32 Save, uint32 Left_Remaining, uint32 Right_Remaining, address UpLine_Address, address Left_Child, address Right_Child, bool Sync_Complete)"], signer);
+
+            const info = await mainContract.Owner_Info_Global(addr);
+            const isMember = Number(info.ID) > 0;
+
+            // UI Transformation
+            connectBtn.innerText = "Wallet: " + addr.substring(0,6) + "...";
+            connectBtn.className = "btn btn-sub"; // Shrink after connect
+            dash.style.display = "flex"; // Dashboard buttons become primary
+
+            if (!isMember) {
+                document.getElementById('registrationZone').style.display = "block";
+            }
+            
+            // Update Balances
+            const bnb = await provider.getBalance(addr);
+            document.getElementById('bnbVal').innerText = parseFloat(ethers.formatEther(bnb)).toFixed(3);
+            const dai = await tokenContract.balanceOf(addr);
+            document.getElementById('daiBal').innerText = parseFloat(ethers.formatUnits(dai, 18)).toFixed(2);
+            
+        } catch (e) { console.error(e); }
+    };
+
+    document.getElementById('approveBtn').onclick = async () => {
+        try {
+            const tx = await tokenContract.approve(CONTRACT_ADDRESS, ethers.parseUnits("1", 18));
+            await tx.wait();
+            document.getElementById('step1').style.display = "none";
+            document.getElementById('step2').style.display = "block";
+        } catch (e) {}
+    };
+
+    document.getElementById('registerBtn').onclick = async () => {
+        const up = document.getElementById('uplineInput').value;
+        try {
+            const tx = await mainContract.step_2_become_owner(up);
+            await tx.wait();
+            document.getElementById('congratsModal').style.display = "flex";
+        } catch (e) {}
+    };
+
+    document.getElementById('rewardBtn').onclick = async () => {
+        try { await (await mainContract.reward()).wait(); alert("Success!"); } catch (e) { alert("Execution Failed"); }
+    };
+
+    document.getElementById('infoBtn').onclick = async () => {
+        const addr = await signer.getAddress();
+        const info = await mainContract.Owner_Info_Global(addr);
+        document.getElementById('infoPanel').style.display = "block";
+        document.getElementById('v-id').innerText = info.ID;
+        document.getElementById('v-l').innerText = info.All_Left;
+        document.getElementById('v-r').innerText = info.All_Right;
+        document.getElementById('v-s').innerText = info.Sync_Complete ? "YES" : "NO";
+    };
+</script>
+</body>
+</html>
